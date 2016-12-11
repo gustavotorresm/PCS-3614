@@ -5,19 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public class GameRequest {
-
-    private Action action;
+public class StartRequest {
 
     private List<PlayerJSON> players;
-
-    public Action getAction() {
-        return action;
-    }
-
-    public void setAction(Action action) {
-        this.action = action;
-    }
 
     public List<PlayerJSON> getPlayers() {
         return players;
