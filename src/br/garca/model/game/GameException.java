@@ -1,4 +1,4 @@
-package br.garca.model;
+package br.garca.model.game;
 
 public class GameException extends RuntimeException {
     public GameException(String message) {
