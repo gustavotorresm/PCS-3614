@@ -1,5 +1,6 @@
 package br.garca.model.game;
 
+import javax.servlet.http.HttpSession;
 import java.util.*;
 import java.util.stream.IntStream;
 
@@ -17,10 +18,12 @@ public class Game {
         this.pack = CardFactory.createPack();
 
         players.forEach(p -> p.setCurrentGame(this));
-        gameNumber = 0;
+        gameNumber = -1;
     }
 
     public void startRound() {
+        gameNumber++;
+
         shufflePack();
         distributeCards();
     }
@@ -147,5 +150,18 @@ public class Game {
         );
 
         return  bets;
+    }
+
+    public Player getWinner() {
+        return round.getWinner();
+    }
+
+    public void play(Player player) {
+        if (player.getHand().size() == 1) {
+            Card card = player.getHand().stream().findAny().get();
+            round.play(card);
+        } else {
+            throw new GameException("YOU MUST CHOOSE A CARD");
+        }
     }
 }

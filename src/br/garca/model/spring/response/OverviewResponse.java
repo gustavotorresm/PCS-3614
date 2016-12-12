@@ -13,6 +13,9 @@ public class OverviewResponse extends ApiResponse {
     private CardJSON vira;
     private Map<Integer, CardJSON> playedCards;
 
+    private Integer winner;
+    private Integer currentPlayer;
+
 
     public List<HandJSON> getHands() {
         return hands;
@@ -36,5 +39,21 @@ public class OverviewResponse extends ApiResponse {
 
     public void setPlayedCards(Map<Integer, CardJSON> playedCards) {
         this.playedCards = playedCards;
+    }
+
+    public Integer getWinner() {
+        return winner;
+    }
+
+    public void setWinner(Integer winner) {
+        this.winner = winner;
+    }
+
+    public Integer getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    public void setCurrentPlayer(Integer currentPlayer) {
+        this.currentPlayer = currentPlayer;
     }
 }

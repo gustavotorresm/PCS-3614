@@ -119,6 +119,7 @@ public class Round {
 
     private void finishTurn() {
         turnFinished = true;
+        turn++;
 
         Card highest = getHighestCard();
         if (highest != null) {
@@ -126,9 +127,15 @@ public class Round {
             int playerScore = score.getOrDefault(winner, 0);
             score.put(winner, playerScore + 1);
         }
+
+        if (turn == TURNS_NUMBER) {
+            finishRound();
+        }
     }
 
     private void finishRound() {
+        roundFinished = true;
+
         discardPile.add(vira);
 
         differenceMap = new HashMap<>();
@@ -200,5 +207,11 @@ public class Round {
 
     public HashMap<Player,Integer> getBets() {
         return bets;
+    }
+
+    public Player getWinner() {
+        if (roundFinished) return winner;
+
+        return null;
     }
 }

@@ -2,6 +2,7 @@ package br.garca.controller;
 
 import br.garca.model.game.*;
 import br.garca.model.spring.*;
+import br.garca.model.spring.request.PlayRequest;
 import br.garca.model.spring.request.StartRequest;
 import br.garca.model.spring.response.ApiResponse;
 import br.garca.model.spring.response.BetsResponse;
@@ -88,9 +89,178 @@ public class MainController {
     @RequestMapping("/overview")
     public @ResponseBody
     OverviewResponse overview(@RequestBody PlayerJSON playerRequest) {
+        OverviewResponse response = generateOverview(playerRequest.getId());
+
+        return response;
+    }
+
+    @RequestMapping("/bet")
+    public  @ResponseBody
+    BetsResponse bet(@RequestBody BetJSON request) {
+        BetsResponse response = new BetsResponse();
+        PlayerJSON playerJSON = GameManager.getInstance().getPlayer(request.getPlayerId());
+
+        Player player = GameManager.getInstance().getGamePlayer(request.getPlayerId());
+        if (player == null) {
+            response.setOk(false);
+            response.setMessage("PLAYER DOES NOT EXIST");
+            return response;
+        }
+
+        Game game = GameManager.getInstance().getGame(playerJSON.getCurrentGame());
+        if (game == null) {
+            response.setOk(false);
+            response.setMessage("PLAYER IS NOT IN A GAME");
+            return response;
+        }
+
+        if (! game.getCurrentPlayer().equals(player)) {
+            response.setOk(false);
+            response.setMessage("NOT YOUR TURN");
+
+            return response;
+        }
+
+        try {
+            game.bet(request.getBet());
+        } catch (GameException e) {
+            if (e.getCode() == Code.INVALID_BET) {
+                response.setOk(false);
+                response.setMessage("INVALID BET");
+
+                return response;
+            }
+        }
+
+        Map<Player, Integer> bets = game.getBets();
+        List<BetJSON> betsJson = new LinkedList<>();
+        bets.entrySet().forEach(
+                e -> {
+                    Integer playerId = GameManager.getInstance().getIdFromPlayer(e.getKey());
+                    BetJSON bet = new BetJSON();
+
+                    bet.setPlayerId(playerId);
+                    bet.setBet(e.getValue());
+
+                    betsJson.add(bet);
+                }
+        );
+
+        response.setCurrentPlayer(game.getCurrentPlayer().getId());
+
+        response.setBets(betsJson);
+
+        if (game.isTurnFinished()) {
+            game.nextTurn();
+        }
+
+        return response;
+    }
+
+    @RequestMapping("/getBets")
+    public @ResponseBody
+    BetsResponse getBets(@RequestBody PlayerJSON playerRequest) {
+        BetsResponse response = new BetsResponse();
+        PlayerJSON playerJSON = GameManager.getInstance().getPlayer(playerRequest.getId());
+
+        Player player = GameManager.getInstance().getGamePlayer(playerJSON.getId());
+        Game game = GameManager.getInstance().getGame(playerJSON.getCurrentGame());
+
+        Map<Player, Integer> bets = game.getBets();
+        List<BetJSON> betsJson = new LinkedList<>();
+        bets.entrySet().forEach(
+                e -> {
+                    Integer playerId = GameManager.getInstance().getIdFromPlayer(e.getKey());
+                    BetJSON bet = new BetJSON();
+
+                    bet.setPlayerId(playerId);
+                    bet.setBet(e.getValue());
+
+                    betsJson.add(bet);
+                }
+        );
+
+        response.setCurrentPlayer(game.getCurrentPlayer().getId());
+
+        response.setBets(betsJson);
+        return response;
+    }
+
+    @RequestMapping("/play")
+    public @ResponseBody
+    OverviewResponse play(@RequestBody PlayRequest request) {
         OverviewResponse response = new OverviewResponse();
 
-        PlayerJSON playerJSON = GameManager.getInstance().getPlayer(playerRequest.getId());
+        Player player = GameManager.getInstance().getGamePlayer(request.getPlayerId());
+        if (player == null) {
+            response.setOk(false);
+            response.setMessage("PLAYER DOES NOT EXIST");
+            return response;
+        }
+
+        PlayerJSON playerJSON = GameManager.getInstance().getPlayer(player.getId());
+        Game game = GameManager.getInstance().getGame(playerJSON.getCurrentGame());
+        if (game == null) {
+            response.setOk(false);
+            response.setMessage("PLAYER IS NOT IN A GAME");
+            return response;
+        }
+
+        if (! game.getCurrentPlayer().equals(player)) {
+            response.setOk(false);
+            response.setMessage("NOT YOUR TURN");
+            return response;
+        }
+
+        try {
+            if (request.getCard() == null) {
+                game.play(player);
+            } else {
+                int number = request.getCard().getNumber();
+                Suit suit = request.getCard().getSuit();
+
+                Card card = new Card(number, suit);
+                game.play(card);
+            }
+        } catch (GameException e) {
+            response.setOk(false);
+            response.setMessage(e.getMessage());
+            return response;
+        }
+
+        response = generateOverview(player.getId());
+
+        if (game.isTurnFinished()) {
+            game.nextTurn();
+        }
+
+        return response;
+    }
+
+    @RequestMapping("/newRound")
+    public @ResponseBody
+    ApiResponse newRound(@RequestBody PlayerJSON request) {
+        ApiResponse response = new ApiResponse();
+
+        PlayerJSON playerJSON = GameManager.getInstance().getPlayer(request.getId());
+        Game game = GameManager.getInstance().getGame(playerJSON.getCurrentGame());
+
+        game.startRound();
+
+        response.setOk(true);
+        return response;
+    }
+
+    @RequestMapping("/")
+    public @ResponseBody
+    ApiResponse main() {
+        return new ApiResponse(false, "INVALID METHOD");
+    }
+
+    private OverviewResponse generateOverview(Integer playerId) {
+        OverviewResponse response = new OverviewResponse();
+
+        PlayerJSON playerJSON = GameManager.getInstance().getPlayer(playerId);
         if (playerJSON == null) {
             response.setOk(false);
             response.setMessage("PLAYER DOES NOT EXIST");
@@ -150,98 +320,23 @@ public class MainController {
                 }
         );
         response.setHands(hands);
+        response.setPlayedCards(playedCardsJSON);
 
         CardJSON vira = new CardJSON();
         vira.setNumber(game.getVira().getNumber());
         vira.setSuit(game.getVira().getSuit());
+
+        if (game.getWinner() != null) {
+            response.setWinner(game.getWinner().getId());
+        }
+
+        if (game.getCurrentPlayer() != null) {
+            response.setCurrentPlayer(game.getCurrentPlayer().getId());
+        }
 
         response.setVira(vira);
 
         response.setOk(true);
         return response;
     }
-
-    @RequestMapping("/bet")
-    public  @ResponseBody
-    BetsResponse bet(@RequestBody BetJSON request) {
-        BetsResponse response = new BetsResponse();
-        PlayerJSON playerJSON = GameManager.getInstance().getPlayer(request.getPlayerId());
-
-        Player player = GameManager.getInstance().getGamePlayer(request.getPlayerId());
-        Game game = GameManager.getInstance().getGame(playerJSON.getCurrentGame());
-
-        if (! game.getCurrentPlayer().equals(player)) {
-            response.setOk(false);
-            response.setMessage("NOT YOUR TURN");
-
-            return response;
-        }
-
-        try {
-            game.bet(request.getBet());
-        } catch (GameException e) {
-            if (e.getCode() == Code.INVALID_BET) {
-                response.setOk(false);
-                response.setMessage("INVALID BET");
-
-                return response;
-            }
-        }
-
-        Map<Player, Integer> bets = game.getBets();
-        List<BetJSON> betsJson = new LinkedList<>();
-        bets.entrySet().forEach(
-                e -> {
-                    Integer playerId = GameManager.getInstance().getIdFromPlayer(e.getKey());
-                    BetJSON bet = new BetJSON();
-
-                    bet.setPlayerId(playerId);
-                    bet.setBet(e.getValue());
-
-                    betsJson.add(bet);
-                }
-        );
-
-        response.setCurrentPlayer(game.getCurrentPlayer().getId());
-
-        response.setBets(betsJson);
-        return response;
-    }
-
-    @RequestMapping("/getBets")
-    public @ResponseBody
-    BetsResponse getBets(@RequestBody PlayerJSON playerRequest) {
-        BetsResponse response = new BetsResponse();
-        PlayerJSON playerJSON = GameManager.getInstance().getPlayer(playerRequest.getId());
-
-        Player player = GameManager.getInstance().getGamePlayer(playerJSON.getId());
-        Game game = GameManager.getInstance().getGame(playerJSON.getCurrentGame());
-
-        Map<Player, Integer> bets = game.getBets();
-        List<BetJSON> betsJson = new LinkedList<>();
-        bets.entrySet().forEach(
-                e -> {
-                    Integer playerId = GameManager.getInstance().getIdFromPlayer(e.getKey());
-                    BetJSON bet = new BetJSON();
-
-                    bet.setPlayerId(playerId);
-                    bet.setBet(e.getValue());
-
-                    betsJson.add(bet);
-                }
-        );
-
-        response.setCurrentPlayer(game.getCurrentPlayer().getId());
-
-        response.setBets(betsJson);
-        return response;
-    }
-
-    @RequestMapping("/")
-    public @ResponseBody
-    ApiResponse main() {
-        return new ApiResponse(false, "INVALID METHOD");
-    }
-
-
 }
