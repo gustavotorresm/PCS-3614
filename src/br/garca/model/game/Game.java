@@ -45,6 +45,8 @@ public class Game {
 
         Card vira = pack.pop();
 
+        roundPlayers.forEach(p -> System.out.println(p.getId()));
+
         round = new Round(roundPlayers, vira);
     }
 
@@ -113,5 +115,37 @@ public class Game {
         if (round != null) {
             round.startNewTurn();
         }
+    }
+
+    public Map<Player, Set<Card>> getVisibleHands(Player player) {
+        return round.getVisibleHands(player);
+    }
+
+    public Map<Player,Integer> getCardsNumber() {
+        Map<Player, Integer> cardsNumber = new HashMap<>();
+
+        players.forEach(
+                p -> cardsNumber.put(p, p.getHand().size())
+        );
+
+        return cardsNumber;
+    }
+
+    public Map<Player,Card> getPlayedCards() {
+        return round.getPlayedCards();
+    }
+
+    public Map<Player,Integer> getBets() {
+        Map bets = round.getBets();
+
+        players.forEach(
+                p -> {
+                    if (! bets.containsKey(p)) {
+                        bets.put(p, null);
+                    }
+                }
+        );
+
+        return  bets;
     }
 }

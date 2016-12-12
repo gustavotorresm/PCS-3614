@@ -8,6 +8,7 @@ public class Player {
     private Set<Card> hand = new HashSet<>();
     private Game currentGame;
     private String name;
+    private int id;
 
     public void setHand(Set<Card> hand) {
         this.hand = hand;
@@ -30,7 +31,19 @@ public class Player {
         currentGame.play(card);
     }
 
-    public Player(String name) {
-        this.name = name;
+    public Player(int id) {
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public boolean equals(Player player) {
+        return player.getId() == id;
     }
 }

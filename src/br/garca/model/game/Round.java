@@ -1,5 +1,7 @@
 package br.garca.model.game;
 
+import com.google.common.collect.HashBiMap;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,9 +63,9 @@ public class Round {
 
         // Last player
         if (currentPlayerOffset == players.size() - 1) {
-            int betsSum = bets.values().parallelStream().collect(Collectors.summingInt(b -> b));
+            int betsSum = bets.values().parallelStream().collect(Collectors.summingInt(b -> b == null ? 0 : b));
             if (bet + betsSum == TURNS_NUMBER) {
-                throw new GameException("Bets must not sum as the amount of players");
+                throw new GameException("Bets must not sum as the amount of players", Code.INVALID_BET);
             }
         }
 
@@ -166,5 +168,37 @@ public class Round {
         }
 
         return null;
+    }
+
+    public Map<Player,Set<Card>> getVisibleHands(Player player) {
+        Map<Player, Set<Card>> hands = new HashMap<>();
+
+        players.forEach(
+                p -> {
+                    if (player.equals(p)) {
+                        if (TURNS_NUMBER != 1) {
+                            hands.put(p, p.getHand());
+                        }  else {
+                            hands.put(p, new HashSet<>());
+                        }
+                    } else {
+                        if (TURNS_NUMBER == 1) {
+                            hands.put(p, p.getHand());
+                        } else {
+                            hands.put(p, new HashSet<>());
+                        }
+                    }
+                }
+        );
+
+        return hands;
+    }
+
+    public Map<Player,Card> getPlayedCards() {
+        return HashBiMap.create(currentGame).inverse();
+    }
+
+    public HashMap<Player,Integer> getBets() {
+        return bets;
     }
 }

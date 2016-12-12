@@ -5,6 +5,7 @@ public class PlayerJSON {
 
     private int id;
     private String name;
+    private int currentGame;
 
     public PlayerJSON(String name) {
         this.name = name;
@@ -28,5 +29,13 @@ public class PlayerJSON {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public int getCurrentGame() {
+        return currentGame;
+    }
+
+    public void setCurrentGame(int currentGame) {
+        this.currentGame = currentGame;
     }
 }

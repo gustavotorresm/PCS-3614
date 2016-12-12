@@ -1,6 +1,7 @@
-package br.garca.model.spring;
+package br.garca.model.spring.request;
 
 import br.garca.model.game.Player;
+import br.garca.model.spring.PlayerJSON;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
