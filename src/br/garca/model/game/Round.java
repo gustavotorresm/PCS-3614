@@ -27,7 +27,7 @@ public class Round {
     private int currentPlayerOffset;
     private boolean turnFinished = false;
     private boolean roundFinished = false;
-    private int turn = -1;
+    private int turn = 0;
 
     public Round(ArrayList<Player> players, Card vira) {
         this.players = players;
@@ -78,6 +78,11 @@ public class Round {
     }
 
     public void startNewTurn() {
+        if (!roundFinished && turn == TURNS_NUMBER) {
+            finishRound();
+            return;
+        }
+
         if (!(turnFinished && ready) || roundFinished) {
             throw new GameException("Cannot start a new turn");
         }
@@ -88,12 +93,12 @@ public class Round {
         turnFinished = false;
         currentPlayerOffset = 0;
 
-        currentGame.keySet().forEach(
-                c -> {
-                    currentGame.remove(c);
-                    discardPile.add(c);
-                }
-        );
+        for (Iterator<Card> it = currentGame.keySet().iterator(); it.hasNext();) {
+            Card card = it.next();
+            discardPile.add(card);
+        }
+
+        currentGame.clear();
     }
 
     public boolean isTurnFinished() {
@@ -126,10 +131,6 @@ public class Round {
             winner = currentGame.get(highest);
             int playerScore = score.getOrDefault(winner, 0);
             score.put(winner, playerScore + 1);
-        }
-
-        if (turn == TURNS_NUMBER) {
-            finishRound();
         }
     }
 
@@ -210,8 +211,20 @@ public class Round {
     }
 
     public Player getWinner() {
-        if (roundFinished) return winner;
+        if (turnFinished) return winner;
 
         return null;
+    }
+
+    public Set<Card> getDiscardPile() {
+        return discardPile;
+    }
+
+    public HashMap<Player,Integer> getScore() {
+        return score;
+    }
+
+    public boolean isFinished() {
+        return TURNS_NUMBER == turn;
     }
 }

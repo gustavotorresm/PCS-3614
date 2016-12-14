@@ -112,15 +112,15 @@ class CardComparator implements Comparator<Card> {
             }
         }
 
-        return toCaomparatorValue(c1.getNumber()) - toCaomparatorValue(c2.getNumber());
+        return toComparatorValue(c1.getNumber()) - toComparatorValue(c2.getNumber());
     }
 
-    private int toCaomparatorValue(int number) {
-        if (4 <= number && number >= 7) {
+    private int toComparatorValue(int number) {
+        if (4 <= number && number <= 7) {
             return number - 4;
-        } else if (Card.QUEEN <= number && number >= Card.KING) {
+        } else if (Card.QUEEN <= number && number <= Card.KING) {
             return number - Card.QUEEN + 4;
-        } else if (Card.ACE <= number && number >= 3) {
+        } else if (Card.ACE <= number && number <= 3) {
             return number - Card.ACE + 7;
         }
 

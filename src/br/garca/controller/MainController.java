@@ -8,10 +8,7 @@ import br.garca.model.spring.response.ApiResponse;
 import br.garca.model.spring.response.BetsResponse;
 import br.garca.model.spring.response.GameResponse;
 import br.garca.model.spring.response.OverviewResponse;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -154,6 +151,7 @@ public class MainController {
             game.nextTurn();
         }
 
+        response.setOk(true);
         return response;
     }
 
@@ -183,6 +181,72 @@ public class MainController {
         response.setCurrentPlayer(game.getCurrentPlayer().getId());
 
         response.setBets(betsJson);
+
+        response.setOk(true);
+        return response;
+    }
+
+    @RequestMapping("/finishRound")
+    public @ResponseBody
+    OverviewResponse finishRound(@RequestBody PlayerJSON request) {
+        OverviewResponse response = new OverviewResponse();
+
+        Player player = GameManager.getInstance().getGamePlayer(request.getId());
+        if (player == null) {
+            response.setOk(false);
+            response.setMessage("PLAYER DOES NOT EXIST");
+            return response;
+        }
+
+        PlayerJSON playerJSON = GameManager.getInstance().getPlayer(player.getId());
+        Game game = GameManager.getInstance().getGame(playerJSON.getCurrentGame());
+        if (game == null) {
+            response.setOk(false);
+            response.setMessage("PLAYER IS NOT IN A GAME");
+            return response;
+        }
+
+        if (!game.isTurnFinished()) {
+            response.setOk(false);
+            response.setMessage("TURN IS NOT YET FINISHED");
+            return response;
+        }
+
+        game.startRound();
+
+        response = generateOverview(player.getId());
+        return response;
+    }
+
+    @RequestMapping("/finishTurn")
+    public @ResponseBody
+    OverviewResponse finishTurn(@RequestBody PlayerJSON request) {
+        OverviewResponse response = new OverviewResponse();
+
+        Player player = GameManager.getInstance().getGamePlayer(request.getId());
+        if (player == null) {
+            response.setOk(false);
+            response.setMessage("PLAYER DOES NOT EXIST");
+            return response;
+        }
+
+        PlayerJSON playerJSON = GameManager.getInstance().getPlayer(player.getId());
+        Game game = GameManager.getInstance().getGame(playerJSON.getCurrentGame());
+        if (game == null) {
+            response.setOk(false);
+            response.setMessage("PLAYER IS NOT IN A GAME");
+            return response;
+        }
+
+        if (!game.isTurnFinished()) {
+            response.setOk(false);
+            response.setMessage("TURN IS NOT YET FINISHED");
+            return response;
+        }
+
+        game.nextTurn();
+
+        response = generateOverview(player.getId());
         return response;
     }
 
@@ -229,10 +293,6 @@ public class MainController {
         }
 
         response = generateOverview(player.getId());
-
-        if (game.isTurnFinished()) {
-            game.nextTurn();
-        }
 
         return response;
     }
@@ -325,6 +385,18 @@ public class MainController {
         CardJSON vira = new CardJSON();
         vira.setNumber(game.getVira().getNumber());
         vira.setSuit(game.getVira().getSuit());
+
+        response.setBetting(game.isBetting());
+        response.setRoundFinished(game.isRoundFinished());
+        response.setTurnFinished(game.isTurnFinished());
+
+        HashMap<Integer, Integer> score = new HashMap<>();
+        game.getScore().entrySet().forEach(
+                e -> {
+                    score.put(e.getKey().getId(), e.getValue());
+                }
+        );
+        response.setScore(score);
 
         if (game.getWinner() != null) {
             response.setWinner(game.getWinner().getId());

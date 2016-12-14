@@ -10,14 +10,20 @@ public class Game {
     private  Stack<Card> pack;
     private int gameNumber;
 
+    private Map<Player, Integer> score;
+
     private Round round;
     private Player firstPlayer;
 
     private Game(List<Player> players) {
         this.players = players;
         this.pack = CardFactory.createPack();
+        this.score = new HashMap<>();
 
-        players.forEach(p -> p.setCurrentGame(this));
+        players.forEach(p -> {
+            p.setCurrentGame(this);
+            score.put(p, 0);
+        });
         gameNumber = -1;
     }
 
@@ -47,8 +53,6 @@ public class Game {
         } while (! player.equals(firstPlayer));
 
         Card vira = pack.pop();
-
-        roundPlayers.forEach(p -> System.out.println(p.getId()));
 
         round = new Round(roundPlayers, vira);
     }
@@ -134,6 +138,16 @@ public class Game {
         return cardsNumber;
     }
 
+    public void finishRound() {
+        pack.addAll(round.getDiscardPile());
+
+        Map<Player, Integer> roundScore = round.getScore();
+        roundScore.entrySet().forEach( e -> {
+            int current = score.get(e.getKey());
+            score.put(e.getKey(), current + e.getValue());
+        });
+    }
+
     public Map<Player,Card> getPlayedCards() {
         return round.getPlayedCards();
     }
@@ -163,5 +177,13 @@ public class Game {
         } else {
             throw new GameException("YOU MUST CHOOSE A CARD");
         }
+    }
+
+    public Map<Player,Integer> getScore() {
+        return score;
+    }
+
+    public boolean isRoundFinished() {
+        return round.isFinished();
     }
 }

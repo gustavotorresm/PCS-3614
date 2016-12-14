@@ -16,6 +16,12 @@ public class OverviewResponse extends ApiResponse {
     private Integer winner;
     private Integer currentPlayer;
 
+    private boolean betting;
+    private boolean roundFinished;
+    private boolean turnFinished;
+
+    private Map<Integer, Integer> score;
+
 
     public List<HandJSON> getHands() {
         return hands;
@@ -55,5 +61,37 @@ public class OverviewResponse extends ApiResponse {
 
     public void setCurrentPlayer(Integer currentPlayer) {
         this.currentPlayer = currentPlayer;
+    }
+
+    public boolean isBetting() {
+        return betting;
+    }
+
+    public void setBetting(boolean betting) {
+        this.betting = betting;
+    }
+
+    public Map<Integer, Integer> getScore() {
+        return score;
+    }
+
+    public void setScore(Map<Integer, Integer> score) {
+        this.score = score;
+    }
+
+    public boolean isRoundFinished() {
+        return roundFinished;
+    }
+
+    public void setRoundFinished(boolean roundFinished) {
+        this.roundFinished = roundFinished;
+    }
+
+    public boolean isTurnFinished() {
+        return turnFinished;
+    }
+
+    public void setTurnFinished(boolean turnFinished) {
+        this.turnFinished = turnFinished;
     }
 }
